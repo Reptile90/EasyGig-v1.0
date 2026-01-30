@@ -1,0 +1,169 @@
+Requisiti della Venue:
+    1.1 Nome:Stringa
+    1.2 Indirizzo (vedi req. 12)
+    1.3 direttoreArtistico (vedi req.2)
+    1.4 email: Stringa secondo standard univoca
+    1.5 numeroTelefono: Stringa secondo standard univoca
+    1.6 tipo_sala: {'in_piedi','platea','tavoli','misto'}
+    1.7 capienza_max: Intero > 0
+    1.8 strumentazione: Stringa
+    1.9 foto (vedi req.8)
+
+Requisiti del DirettoreArtistico:
+    2.1 Nome:Stringa
+    2.2 Cognome:Stringa
+    2.3 numeroTelefono: Stringa secondo standard univoca
+    2.4 email:Stringa secondo standard univoca
+    2.5 password:Stringa
+    2.6 data_creazione: DataOra
+
+
+Requisiti del Promoter:
+    3.1 nome:Stringa
+    3.2 cognome:Stringa
+    3.3 numeroTelefono:Stringa secondo standard univoca
+    3.4 email: Stringa secondo standard univoca
+    3.5 password:Stringa
+    3.6 organizzazione (vedi req. 4)
+    3.7 data_creazione: DataOra
+
+Requisiti dell'Organizzazione:
+    4.1 nome:Stringa
+    4.2 storicoEventi: Stringa [0..1]
+    4.3 tipo: {'agenzia','crew','collettivo','individuale'}
+    4.4 citta (vedi req. 11)
+
+Requisiti della Band
+    5.1 nome:Stringa
+    5.2 citta (vedi req. 11)
+    5.3 cachet: Intero >=0 [0..1] se compilato si necessita
+        5.3.1 trattabile:Booleano
+    5.4 linkStreaming: Stringa [0..1] se non compilato
+        5.4.1 fileUpload: Stringa [1..1]
+    5.5 responsabileBand (vedi req.6)
+    5.6 genere (vedi req. 13)
+    5.7 categoria {'originale','tribute band', 'cover band'}
+
+Requisiti del responsabileBand
+    6.1 nome: Stringa
+    6.2 cognome: Stringa
+    6.3 numeroTelefono: Stringa secondo standard univoca
+    6.4 email:Stringa secondo standard univoca
+    6.5 data_creazione: DataOra
+
+
+Requisiti dell'ArtistaSolista
+    7.1 nome: Stringa
+    7.2 cognome: Stringa
+    7.3 nomearte: Stringa [0..1]
+    7.4 numeroTelefono: Stringa secondo standard univoca
+    7.5 email: Stringa secondo standard univoca
+    7.6 data_creazione: DataOra
+    7.7 citta (vedi req. 11)
+    7.8 linkStreaming: Stringa [0..1] se non compilato
+        7.8.1 fileUpload: Stringa [1..1]
+
+Requisiti della Foto:
+    8.1 nome: Stringa
+    8.2 source: Stringa
+    8.8 venue: (vedi req 1)
+
+Requisiti della Nazione:
+    9.1 nome: Stringa univoca
+
+Requisiti della Regione:
+    10.1 nome: Stringa univoca
+    10.2 nazione: (vedi req 9)
+
+Requisiti della Citta:
+    11.1 nome: Stringa univoca
+    11.2 regione: (vedi req 10)
+
+Requsiti dell'Indirizzo
+    12.1 via: Stringa secondo standard
+    12.2 numero_civico: Stringa secondo standard
+    12.3 citta: (vedi req. 11)
+    12.4 cap: Stringa secondo standard
+
+
+Requisiti del Genere:
+    13.1 nome: Stringa
+
+
+Requisiti della Recensione:
+    14.1 istante: DataOra
+    14.2 descrizione: Stringa
+    14.3 valutazione (vedi req.15)
+
+Requisiti della Valutazione:
+    15.1 voto: Intero [1..5]
+
+
+Requisiti della Prenotazione:
+    16.1 istante_creazione: DataOra
+    16.2 messaggioPresentazione: Stringa [1..1]
+    16.3 data_scadenza: DataOra
+    16.4 stato {'pendente','accettata','rifiutata','scaduta','annullata'}
+    16.5 motivazione_annullamento: Stringa [0..1]
+    16.6 calendario
+
+
+Requisiti dell'Evento:
+    17.1 nome:Stringa
+    17.2 data_inizio: DataOra
+    17.4 durata: Intero > 0
+    17.5 slot_totali: Intero > 0
+
+Requisiti del Calendario
+    18.1 disponibilita_slot: Intero > 0
+    18.2 data: Data
+    18.3 orario_inizio: Ora
+    18.4 orario_fine: Ora
+
+
+Requisiti dello Slot
+    19.1 stato {'disponibile','in_trattativa','occupato'}
+    19.2 istante: DataOra
+    19.3 durata: Intero >= 0
+
+
+Requisiti dello StatoAccount
+    20.1 stato: {'attivo','warning','congelato'}
+    20.2 istante: DataOra
+    20.2 durata_congelamento: Intero > 0
+
+Requisiti della Sanzione:
+    21.1 contatoreStrike: Intero >= 0
+    21.2 sogliaWarning: Intero > 0
+    21.3 sogliaBan: Intero > 0
+    21.4 Prenotazione (Vedi req. 16)
+    21.5 StatoAccount (Vedi req. 20)
+
+Requisiti della Chat:
+    22.1 data_apertura: DataOra
+    22.2 ultimo_messaggio: DataOra
+    22.3 Messaggio (vedi req. 23)
+
+Requisiti del Messaggio:
+    23.1 testo: Stringa
+    23.2 data_invio: DataOra
+    23.3 letto: Booleano
+    23.4 mittente
+    23.5 chat: (vedi req.22)
+
+Requisiti del CriterioRicerca
+    24.1 tipoTarget: Stringa
+    24.2 zonaGeografica: Stringa
+    24.3 genere: Stringa
+    24.4 categoria: Stringa
+    24.5 capienza_minima: Intero > 0
+    24.6 tipo_sala: Stringa
+    24.7 dataInteresse: Data
+
+
+
+
+
+
+
+
