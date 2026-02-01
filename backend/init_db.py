@@ -13,9 +13,6 @@ def init_db():
 
     # 2. Inserisce Trigger e Procedure SQL
     print("2. Inserimento Trigger e Procedure (SQL)...")
-
-    # NOTA: Tutti i nomi delle tabelle qui sotto sono stati convertiti
-    # in minuscolo (es. 'person', 'booking_organization') per combaciare con il DB.
     sql_commands = text("""
     /* ==============================================
        SEZIONE 3: TRIGGER STRUTTURALI

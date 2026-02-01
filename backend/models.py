@@ -193,7 +193,8 @@ class Calendar(Base):
     venue_id = Column(Integer, ForeignKey('venue.id'))
     venue_calendar = relationship("Venue", back_populates='calendarlist')
     slots = relationship('Slot', back_populates= 'calendar_event')
-    
+
+#TABELLA SLOT
 class Slot(Base):
     __tablename__ = 'slot'
     
@@ -204,7 +205,7 @@ class Slot(Base):
     calendar_id = Column(Integer, ForeignKey('calendar.id'), nullable=False)
     calendar_event = relationship("Calendar", back_populates="slots")
     
-    
+#TABELLA BOOKING
 class Booking(Base):
     __tablename__ = 'booking'
     id = Column(Integer, primary_key=True)
@@ -229,13 +230,13 @@ class Booking(Base):
             name='ragione_obbligatoria_annullata'
         ),
     )
-
+#TABELLA BOOK_CAL
 class book_cal(Base):
     __tablename__ = 'book_cal'
     booking_id = Column(Integer, ForeignKey('booking.id'), primary_key=True)
     calendar_id = Column(Integer, ForeignKey('calendar.id'), primary_key=True)
     
-    
+#TABELLA CHAT
 class Chat(Base):
     __tablename__ ='chat'
     id = Column(Integer, primary_key=True)
@@ -246,6 +247,8 @@ class Chat(Base):
     chat_prenotazioni = relationship('Booking', back_populates="chats")
     messages = relationship('Message', back_populates='chatlist')
     
+
+#TABELLA MESSAGE
 class Message(Base):
     __tablename__ = 'message'
     id = Column(Integer, primary_key=True)
@@ -257,7 +260,7 @@ class Message(Base):
     
     chatlist = relationship('Chat', back_populates="messages")
     
-    
+#TABELLA REVIEW
 class Review(Base):
     __tablename__ = 'review'
     id = Column(Integer, primary_key=True)
@@ -275,7 +278,7 @@ class Review(Base):
         CheckConstraint('autore_id != destinatario_id', name='check_no_auto_recensione'),
         UniqueConstraint('booking_id', 'autore_id', name='una_recensione_per_booking')
     )
-
+#TABELLA SCORE
 class Score(Base):
     __tablename__ = 'score'
     id = Column(Integer, primary_key=True)
@@ -286,7 +289,7 @@ class Score(Base):
     __table_args__ = (
         CheckConstraint('voto >= 0 AND voto <= 5', name='check_voto_range'),)
     
-    
+#TABELLA SANCTION
 class Sanction(Base):
     __tablename__ = 'sanction'
     id = Column(Integer, primary_key=True)
@@ -298,7 +301,7 @@ class Sanction(Base):
     
     persona_sanzionata = relationship('Person', back_populates="sanzioni")
     
-    
+#TABELLA STATO ACCOUNT
 class StatoAccount(Base):
     __tablename__ = 'stato_account'
     id = Column(Integer, primary_key=True)
