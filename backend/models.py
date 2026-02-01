@@ -85,6 +85,7 @@ class Address(Base):
     cap = Column(String, nullable=False)
     citta_id = Column(Integer,ForeignKey('city.id'), nullable=False)
     
+#TABELLA GENRE
 class Genre(Base):
     __tablename__ = 'genre'
     id = Column(Integer, primary_key=True)
@@ -92,7 +93,7 @@ class Genre(Base):
     artists = relationship("Person", back_populates="genre")
     
     bands = relationship("Band", back_populates='genre')
-    
+#TABELLA BOOKING ORGANIZATION
 class BookingOrganization(Base):
     __tablename__= 'booking_organization'
     id = Column(Integer, primary_key=True)
