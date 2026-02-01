@@ -49,7 +49,6 @@ CREATE TABLE Person(
   genere_id INTEGER NOT NULL REFERENCES Genre(id),
   organization_id INTEGER NOT NULL REFERENCES BookingOrganization(id),
   reputazione DECIMAL(3, 2) DEFAULT 0.00,
-  -- Vincolo corretto: file/link obbligatorio SOLO per artisti
   CONSTRAINT link_o_file_obbligatorio CHECK (
     (tipo_utente <> 'artista') OR ((link_streaming IS NOT NULL) OR (file_path IS NOT NULL))
   )
@@ -108,11 +107,13 @@ CREATE TABLE Booking(
   stato_prenotazione BookingState NOT NULL,
   ragione TEXT,
   iniziato_da PersonType NOT NULL DEFAULT 'artista',
-  band_id INTEGER NOT NULL REFERENCES Band(id),  
-  venue_id INTEGER NOT NULL REFERENCES Venue(id), 
+  band_id INTEGER NOT NULL REFERENCES Band(id),
+  venue_id INTEGER NOT NULL REFERENCES Venue(id),
+  calendar_id INTEGER NOT NULL REFERENCES Calendar(id),
   CONSTRAINT ragione_obbligatoria_annullata CHECK ((stato_prenotazione <> 'annullata') OR (ragione IS NOT NULL))
 );
 
+-- Tabella mantenuta su richiesta, anche se ridondante
 CREATE TABLE book_cal(
   booking_id INTEGER NOT NULL,
   calendar_id INTEGER NOT NULL,
@@ -179,7 +180,6 @@ CREATE TABLE StatoAccount(
 
 /* ==============================================
    SEZIONE 3: TRIGGER STRUTTURALI (INCLUSIONE)
-   Riparati separando Insert e Delete per evitare errori su NEW/OLD mancanti
    ============================================== */
 
 -- 3.1 ORGANIZZAZIONE (1..*)
@@ -306,11 +306,15 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER tr_check_ban_threshold AFTER UPDATE OF contatoreStrike ON Sanction FOR EACH ROW EXECUTE FUNCTION trigger_ban_automatico();
 
 -- Validazione Recensione
+-- MODIFICA: Aggiornato per usare Booking.calendar_id invece di book_cal
 CREATE OR REPLACE FUNCTION check_review_eligibility() RETURNS TRIGGER AS $$
 DECLARE v_stato_booking BookingState; v_data_fine TIME; v_data_evento DATE;
 BEGIN
+    -- Join diretto con Calendar grazie alla nuova FK su Booking
     SELECT b.stato_prenotazione, c.data, c.data_fine INTO v_stato_booking, v_data_evento, v_data_fine
-    FROM Booking b JOIN book_cal bc ON b.id = bc.booking_id JOIN Calendar c ON bc.calendar_id = c.id WHERE b.id = NEW.booking_id;
+    FROM Booking b 
+    JOIN Calendar c ON b.calendar_id = c.id 
+    WHERE b.id = NEW.booking_id;
     
     IF v_stato_booking = 'annullata' THEN RETURN NEW; END IF;
     IF v_stato_booking = 'accettata' THEN
@@ -338,12 +342,17 @@ CREATE TRIGGER tr_auto_chat AFTER UPDATE ON Booking FOR EACH ROW EXECUTE FUNCTIO
    SEZIONE 5: PROCEDURE (OPERAZIONI)
    ============================================== */
 
+-- MODIFICA: Aggiornato per usare Booking.calendar_id
 CREATE OR REPLACE PROCEDURE accetta_prenotazione(p_booking_id INTEGER) LANGUAGE plpgsql AS $$
 DECLARE v_cal_id INTEGER;
 BEGIN
-    SELECT calendar_id INTO v_cal_id FROM book_cal WHERE booking_id = p_booking_id LIMIT 1;
+    -- Lettura diretta dalla tabella Booking
+    SELECT calendar_id INTO v_cal_id FROM Booking WHERE id = p_booking_id;
+    
+    -- Logica decremento slot
     UPDATE Calendar SET slot_disponibili = slot_disponibili - 1 WHERE id = v_cal_id AND slot_disponibili > 0;
     IF NOT FOUND THEN RAISE EXCEPTION 'Slot esauriti!'; END IF;
+    
     UPDATE Booking SET stato_prenotazione = 'accettata' WHERE id = p_booking_id;
 END;
 $$;
