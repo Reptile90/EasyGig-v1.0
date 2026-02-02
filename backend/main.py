@@ -2,8 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Person
-
+from routes import auth
 app = FastAPI()
+app.include_router(auth.router)
 
 def get_db():
     db = SessionLocal()

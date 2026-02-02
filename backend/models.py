@@ -123,6 +123,7 @@ class Person(Base):
     organization_id = Column(Integer, ForeignKey('booking_organization.id'), nullable=False)
     organization = relationship("BookingOrganization", back_populates='members')
     reputazione = Column(DECIMAL(3,2), default=0.00)
+    privacy_accettata = Column(Boolean, nullable=False)
     managed_venues = relationship("Venue", back_populates="direttore")
     list_reviews = relationship("Review", back_populates="autore", foreign_keys="[Review.autore_id]")
     reviews = relationship("Review", back_populates="destinatario", foreign_keys="[Review.destinatario_id]")
