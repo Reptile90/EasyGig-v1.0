@@ -20,3 +20,7 @@ class CalendarSchema(CalendarCreate):
 
     class Config:
         from_attributes = True
+        
+        
+class SlotBooking(BaseModel):
+    artista_id:int
