@@ -74,8 +74,8 @@ def get_calendars(db:Session = Depends(get_db)):
 
 
 #ENDPOINT PATCH per la prenotazione.
-@router.post("/{slot_id}", response_model=SlotBooking)
-def book(slot_id:int, booking_data:Booking, db:Session = Depends(get_db)):
+@router.post("/{slot_id}")
+def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
     slot= None
     try:
         slot = db.query(Slot).filter(Slot.id==slot_id).first() #cerco lo slot
@@ -88,7 +88,7 @@ def book(slot_id:int, booking_data:Booking, db:Session = Depends(get_db)):
     data_scadenza = datetime.now() + timedelta(days=5)
     new_book = Booking(
         slot_id=slot_id,
-        band_id=booking_data.band_id,
+        band_id=booking_data.artista_id,
         stato_prenotazione='pendente',
         scadenza = data_scadenza,
         message = "Richiesta di prenotazione"
