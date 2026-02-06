@@ -1,9 +1,11 @@
-from datetime import date,time, datetime
+from datetime import date,time, datetime,timedelta
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from fastapi import APIRouter,Depends, HTTPException
-from models import Calendar,Slot
+from models import Calendar,Slot,Booking, enum
 from schemas import CalendarCreate,CalendarSchema,SlotBooking
+
+
 
 router = APIRouter()
 
@@ -72,24 +74,27 @@ def get_calendars(db:Session = Depends(get_db)):
 
 
 #ENDPOINT PATCH per la prenotazione.
-@router.patch("/{slot_id}", response_model=Slot)
-def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
+@router.post("/{slot_id}", response_model=SlotBooking)
+def book(slot_id:int, booking_data:Booking, db:Session = Depends(get_db)):
     slot= None
     try:
-        slot = db.query(Slot).filter(Slot.id==slot_id).first() #accedo con una query filtrano gli slot_id
+        slot = db.query(Slot).filter(Slot.id==slot_id).first() #cerco lo slot
         
     except Exception as error:
         raise HTTPException(status_code=500,detail=f"Error: {error}")
     
     if not slot:
         raise HTTPException(status_code=404, detail="Errore, slot non trovato")
-    artist_id = slot.artist_id
-    if artist_id:
-        raise HTTPException(status_code=409, detail="Errore, lo slot è già stato prenotato")
-    slot.artist_id = booking_data.artista_id
-    
-    db.add(slot)
+    data_scadenza = datetime.now() + timedelta(days=5)
+    new_book = Booking(
+        slot_id=slot_id,
+        band_id=booking_data.band_id,
+        stato_prenotazione='pendente',
+        scadenza = data_scadenza,
+        message = "Richiesta di prenotazione"
+        )
+    db.add(new_book)
     db.commit()
-    db.refresh(slot)
+    db.refresh(new_book)
     
-    return slot
+    return new_book
