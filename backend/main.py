@@ -2,9 +2,15 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Person
-from routes import auth
+from dotenv import load_dotenv
+load_dotenv()
+from routes import auth, calendar
+
+
+
 app = FastAPI()
-app.include_router(auth.router)
+app.include_router(auth.router, tags=["Autorizzazione"])
+app.include_router(calendar.router, prefix="/calendar", tags=["Calendario"])
 
 def get_db():
     db = SessionLocal()
