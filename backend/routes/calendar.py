@@ -73,18 +73,21 @@ def get_calendars(db:Session = Depends(get_db)):
     return calendar_list
 
 
-#ENDPOINT PATCH per la prenotazione.
+#ENDPOINT POST per creare la prenotazione.
 @router.post("/{slot_id}")
 def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
     slot= None
     try:
         slot = db.query(Slot).filter(Slot.id==slot_id).first() #cerco lo slot
+        active_booking = db.query(Booking).filter(Booking.slot_id == slot_id,Booking.stato_prenotazione.notin_(['rifiutata', 'annullata'])).first() #una prenotazione attiva in quello slot
         
     except Exception as error:
         raise HTTPException(status_code=500,detail=f"Error: {error}")
-    
     if not slot:
         raise HTTPException(status_code=404, detail="Errore, slot non trovato")
+        
+    if active_booking:
+        raise HTTPException(status_code=409, detail="Errore, Slot già occupato")
     data_scadenza = datetime.now() + timedelta(days=5)
     new_book = Booking(
         slot_id=slot_id,
@@ -93,8 +96,11 @@ def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
         scadenza = data_scadenza,
         message = "Richiesta di prenotazione"
         )
-    db.add(new_book)
-    db.commit()
-    db.refresh(new_book)
+    try:
+        db.add(new_book)
+        db.commit()
+        db.refresh(new_book)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Errore: {error}")
     
     return new_book
