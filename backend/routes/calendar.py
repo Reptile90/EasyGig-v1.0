@@ -93,7 +93,7 @@ def get_calendars(db:Session = Depends(get_db)):
 
 #ENDPOINT POST per creare la prenotazione.
 @router.post("/{slot_id}")
-def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
+async def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
     slot= None
     try:
         slot = db.query(Slot).filter(Slot.id==slot_id).first() #cerco lo slot
@@ -118,7 +118,17 @@ def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
         db.add(new_book)
         db.commit()
         db.refresh(new_book)
+        
+        message = MessageSchema(
+            subject="Hai una nuova Prenotazione su EasyGIG!",
+            recipients=["easygigapp1.0@gmail.com"], # pyright: ignore[reportArgumentType]
+            body=f"Ciao! È arrivata una nuova richiesta di prenotazione per lo slot {slot_id}.",
+            subtype=MessageType.html
+        )
+        fm=FastMail(conf)
+        await fm.send_message(message)
     except Exception as error:
+        print(f"Errore invio mail: {error}")
         raise HTTPException(status_code=500, detail=f"Errore: {error}")
     
     return new_book
