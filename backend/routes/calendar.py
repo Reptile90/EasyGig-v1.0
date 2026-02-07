@@ -4,6 +4,24 @@ from database import SessionLocal
 from fastapi import APIRouter,Depends, HTTPException
 from models import Calendar,Slot,Booking, enum
 from schemas import CalendarCreate,CalendarSchema,SlotBooking
+import os
+from dotenv import load_dotenv
+from fastapi_mail import ConnectionConfig,FastMail,MessageSchema, MessageType
+load_dotenv()
+
+conf = ConnectionConfig(
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", ""),
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD",""), # type: ignore
+    MAIL_FROM = os.getenv("MAIL_FROM",""),
+    MAIL_PORT = int(os.getenv("MAIL_PORT",587)),
+    MAIL_SERVER = os.getenv("MAIL_SERVER",""),
+    MAIL_STARTTLS = True,
+    MAIL_SSL_TLS = False,
+    USE_CREDENTIALS = True,
+    VALIDATE_CERTS = True
+)
+
+
 
 
 
