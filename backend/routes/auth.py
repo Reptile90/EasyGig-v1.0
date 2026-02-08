@@ -45,7 +45,7 @@ async def send_invitation_email(email_to: EmailStr, token: str, sender_name: str
     <html>
         <body>
             <p>Ciao!</p>
-            <p><strong>{sender_name}</strong> ti ha invitato a unirti alla band <strong>{band_name}</strong> su EasyGIG! 🎸</p>
+            <p><strong>{sender_name}</strong> ti ha invitato a unirti alla band <strong>{band_name}</strong> su EasyGIG!</p>
             <p>Per accettare e registrarti, clicca sul link qui sotto:</p>
             <a href="{url}">Unisciti alla Band</a>
         </body>
