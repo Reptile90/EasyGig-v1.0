@@ -43,6 +43,11 @@ class StateAccountType(enum.Enum):
     warning = 'warning'
     congelato = 'congelato'
     
+class StateInvitation(enum.Enum):
+    pending='pending'
+    accepted ='accepted'
+    expired = 'expired'
+    
 #TABELLA NATION
 class Nation(Base):
     __tablename__ = "nation"
@@ -90,8 +95,8 @@ class Genre(Base):
     __tablename__ = 'genre'
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
+    #Relazioni
     artists = relationship("Person", back_populates="genre")
-    
     bands = relationship("Band", back_populates='genre')
 #TABELLA BOOKING ORGANIZATION
 class BookingOrganization(Base):
@@ -100,6 +105,7 @@ class BookingOrganization(Base):
     nome = Column(String, nullable=False)
     storico_eventi = Column(Text, nullable=True)
     tipo_booking = Column(Enum(OrganizationType), nullable=False)
+    #Relazioni
     members = relationship("Person", back_populates="organization")
     
     
@@ -116,19 +122,21 @@ class Person(Base):
     password_hash = Column(String, nullable=True)
     link_streaming = Column(String, nullable=True)
     file_path = Column(String, nullable=True)
-    city_id = Column(Integer, ForeignKey("city.id"), nullable=False)
-    city = relationship("City", back_populates="residents")
-    genre = relationship("Genre", back_populates="artists")
-    genere_id = Column(Integer, ForeignKey('genre.id'), nullable=True)
-    organization_id = Column(Integer, ForeignKey('booking_organization.id'), nullable=False)
-    organization = relationship("BookingOrganization", back_populates='members')
     reputazione = Column(DECIMAL(3,2), default=0.00)
     privacy_accettata = Column(Boolean, nullable=False)
+    
+    #Relazioni
+    city_id = Column(Integer, ForeignKey("city.id"), nullable=False)
+    genere_id = Column(Integer, ForeignKey('genre.id'), nullable=True)
+    organization_id = Column(Integer, ForeignKey('booking_organization.id'), nullable=True)
+    organization = relationship("BookingOrganization", back_populates='members')
     managed_venues = relationship("Venue", back_populates="direttore")
     list_reviews = relationship("Review", back_populates="autore", foreign_keys="[Review.autore_id]")
     reviews = relationship("Review", back_populates="destinatario", foreign_keys="[Review.destinatario_id]")
     sanzioni = relationship('Sanction', back_populates='persona_sanzionata')
     accounts = relationship('StatoAccount', back_populates="account_persona")
+    photolist = relationship('Photo', back_populates="person_foto")
+    membro_band = relationship('Invitation', back_populates='perosna')
     
     __table_args__ = (
         CheckConstraint(
@@ -143,9 +151,12 @@ class Band(Base):
     cachet = Column(Integer, nullable=False)
     trattabile = Column(Boolean, nullable=False, default=False)
     categoria = Column(Enum(BandCategory), nullable=False)
+    
+    #Relazioni
     genere_id = Column(Integer, ForeignKey('genre.id'), nullable=False)
     genre = relationship("Genre", back_populates="bands")
     bookings = relationship("Booking", back_populates='bands_bookings')
+    band_list = relationship("Invitation", back_populates='membri')
     
 #TABELLA ASSOCIAZIONE PERSONA-BAND
 class pers_band(Base):
@@ -153,6 +164,21 @@ class pers_band(Base):
     person_id = Column(Integer, ForeignKey('person.id'), primary_key=True, nullable=False)
     band_id = Column(Integer, ForeignKey('band.id'), primary_key=True, nullable=False)
 
+class Invitation(Base):
+    __tablename__ = 'invitation'
+    id = Column(Integer, primary_key=True)
+    email = Column(String, nullable=False)
+    token = Column(String, nullable=False, unique=True)
+    stato = Column(Enum(StateInvitation), nullable=False, default='pending')
+    data_invio = Column(DateTime, nullable=False, default=func.now())
+    
+    # Relazioni
+    band_id = Column(Integer, ForeignKey('band.id'), nullable=False)
+    person_id = Column(Integer, ForeignKey('person.id'), nullable=True)
+    sender_id = Column(Integer, ForeignKey('person.id'), nullable=False)
+    membri = relationship('Band', back_populates="band_list")
+    persona = relationship('Person', foreign_keys=[person_id], back_populates='membro_band')
+    mittente = relationship('Person', foreign_keys=[sender_id])
 #TABELLA VENUE
 class Venue(Base):
     __tablename__ ='venue'
@@ -164,9 +190,9 @@ class Venue(Base):
     capienza = Column(Integer, nullable=False)
     strumentazione = Column(Text, nullable=False)
     
+    #Relazioni
     direttore_id = Column(Integer, ForeignKey('person.id'), nullable=False)
     direttore = relationship("Person", back_populates="managed_venues")
-    
     photolist = relationship('Photo', back_populates='venue_foto')
     calendarlist = relationship('Calendar', back_populates='venue_calendar')
     
@@ -177,9 +203,17 @@ class Photo(Base):
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     source = Column(String, nullable=False)
-    venue_id = Column(Integer, ForeignKey('venue.id'),nullable=False)
-    
+    #Relazioni
+    venue_id = Column(Integer, ForeignKey('venue.id'),nullable=True)
+    person_id = Column(Integer, ForeignKey('person.id'), nullable=True)
     venue_foto = relationship("Venue", back_populates='photolist')
+    person_foto = relationship("Person", back_populates='photolist')
+    __table_args__ = (
+        CheckConstraint(
+            "(venue_id IS NOT NULL AND person_id IS NULL) OR (venue_id IS NULL AND person_id IS NOT NULL)",
+            name="check_photo_owner"
+        ),
+    )
     
     
 #TABELLA CALENDAR
@@ -192,6 +226,7 @@ class Calendar(Base):
     data_inizio = Column(Time, nullable=False)
     data_fine = Column(Time, nullable=False)
     
+    #Relazioni
     venue_id = Column(Integer, ForeignKey('venue.id'))
     venue_calendar = relationship("Venue", back_populates='calendarlist')
     slots = relationship('Slot', back_populates= 'calendar_event')
@@ -204,6 +239,8 @@ class Slot(Base):
     orario_inizio = Column(Time, nullable=False)
     orario_fine = Column(Time, nullable=False)
     stato = Column(Enum(SlotType), nullable=False, default='disponibile')
+    
+    #Relazioni
     calendar_id = Column(Integer, ForeignKey('calendar.id'), nullable=False)
     calendar_event = relationship("Calendar", back_populates="slots")
     
@@ -218,9 +255,9 @@ class Booking(Base):
     ragione = Column(Text, nullable=True)
     iniziato_da = Column(Enum(PersonType), nullable=False, default='artista')
     
+    #Relazioni
     band_id = Column(Integer, ForeignKey('band.id'), nullable=False)
     slot_id = Column(Integer, ForeignKey('slot.id'), nullable=False)
-    
     bands_bookings = relationship("Band", back_populates='bookings')
     slot_item = relationship("Slot")
     chats = relationship('Chat', back_populates='chat_prenotazioni')
@@ -244,8 +281,9 @@ class Chat(Base):
     id = Column(Integer, primary_key=True)
     data_apertura = Column(DateTime, nullable=False, default=func.now())
     ultimo_messaggio = Column(DateTime, nullable=True)
-    booking_id = Column(Integer, ForeignKey('booking.id'), nullable=False)
     
+    #Relazioni
+    booking_id = Column(Integer, ForeignKey('booking.id'), nullable=False)
     chat_prenotazioni = relationship('Booking', back_populates="chats")
     messages = relationship('Message', back_populates='chatlist')
     
@@ -257,9 +295,10 @@ class Message(Base):
     data_invio = Column(DateTime, nullable=False, default=func.now())
     testo = Column(Text, nullable=False)
     letto = Column(Boolean, nullable=True, default=False)
+    
+    #Relazioni
     chat_id = Column(Integer, ForeignKey('chat.id'), nullable=False)
     mittente_id = Column(Integer, ForeignKey('person.id'), nullable= False)
-    
     chatlist = relationship('Chat', back_populates="messages")
     
 #TABELLA REVIEW
@@ -268,6 +307,8 @@ class Review(Base):
     id = Column(Integer, primary_key=True)
     data_creazione = Column(DateTime, nullable=False, default=func.now())
     description = Column(Text, nullable=False)
+    
+    #Relazioni
     autore_id = Column(Integer, ForeignKey('person.id'), nullable=False)
     destinatario_id = Column(Integer, ForeignKey('person.id'), nullable=False)
     booking_id = Column(Integer, ForeignKey('booking.id'), nullable=False)
@@ -286,6 +327,8 @@ class Score(Base):
     id = Column(Integer, primary_key=True)
     data_creazione = Column(DateTime, nullable=False, default=func.now())
     voto = Column(Integer, nullable=False)
+    
+    #Relazioni
     review_id = Column(Integer, ForeignKey('review.id'), nullable=False)
     recensione = relationship('Review', back_populates='votazioni')
     __table_args__ = (
@@ -298,9 +341,10 @@ class Sanction(Base):
     contatorestrike = Column(Integer, nullable=False)
     soglia_warning = Column(Integer, nullable=False)
     soglia_ban = Column(Integer, nullable=False)
+    
+    #Relazioni
     person_id = Column(Integer, ForeignKey('person.id'), nullable=False)
     data_ultimo_ban = Column(DateTime, nullable=True)
-    
     persona_sanzionata = relationship('Person', back_populates="sanzioni")
     
 #TABELLA STATO ACCOUNT
@@ -309,6 +353,7 @@ class StatoAccount(Base):
     id = Column(Integer, primary_key=True)
     stato = Column(Enum(StateAccountType), nullable=False)
     istante = Column(DateTime, nullable=False, default=func.now())
-    person_id = Column(Integer, ForeignKey('person.id'), nullable = False)
     
+    #Relazioni
+    person_id = Column(Integer, ForeignKey('person.id'), nullable = False)
     account_persona = relationship("Person", back_populates="accounts")

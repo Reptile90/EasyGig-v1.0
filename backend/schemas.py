@@ -1,12 +1,23 @@
+from typing import List, Optional
 from pydantic import BaseModel,EmailStr
 from datetime import date, time
+from models import PersonType
+
 
 class UserCreate(BaseModel):
-    nome:str
-    cognome:str
-    email:EmailStr
-    password:str
-    privacy:bool
+    nome: str
+    cognome: str
+    email: EmailStr
+    password: str
+    privacy: bool
+    tipo_utente: PersonType
+    
+    # Campi opzionali per la creazione della Band
+    nome_band: Optional[str] = None
+    emails_soci: Optional[List[EmailStr]] = None
+    
+    # Campo opzionale per chi viene invitato
+    token_invito: Optional[str] = None
     
     
 class CalendarCreate(BaseModel):

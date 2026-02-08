@@ -3,6 +3,7 @@ from sqlalchemy import text
 import models
 
 
+
 def init_db():
     print("--- INIZIO INIZIALIZZAZIONE DATABASE ---")
 
