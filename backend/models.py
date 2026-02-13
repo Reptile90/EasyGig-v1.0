@@ -137,7 +137,7 @@ class Person(Base):
     sanzioni = relationship('Sanction', back_populates='persona_sanzionata')
     accounts = relationship('StatoAccount', back_populates="account_persona")
     photolist = relationship('Photo', back_populates="person_foto")
-    membro_band = relationship('Invitation', back_populates='perosna')
+    membro_band = relationship('Invitation', back_populates='persona')
     
     __table_args__ = (
         CheckConstraint(
