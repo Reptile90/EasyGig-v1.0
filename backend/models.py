@@ -130,6 +130,7 @@ class Person(Base):
     genere_id = Column(Integer, ForeignKey('genre.id'), nullable=True)
     organization_id = Column(Integer, ForeignKey('booking_organization.id'), nullable=True)
     organization = relationship("BookingOrganization", back_populates='members')
+    city = relationship("City", back_populates="residents")
     managed_venues = relationship("Venue", back_populates="direttore")
     list_reviews = relationship("Review", back_populates="autore", foreign_keys="[Review.autore_id]")
     reviews = relationship("Review", back_populates="destinatario", foreign_keys="[Review.destinatario_id]")
@@ -190,8 +191,11 @@ class Venue(Base):
     capienza = Column(Integer, nullable=False)
     strumentazione = Column(Text, nullable=False)
     
+    
     #Relazioni
+    city_id = Column(Integer, ForeignKey('city.id'), nullable=False)
     direttore_id = Column(Integer, ForeignKey('person.id'), nullable=False)
+    venue_city = relationship("City")
     direttore = relationship("Person", back_populates="managed_venues")
     photolist = relationship('Photo', back_populates='venue_foto')
     calendarlist = relationship('Calendar', back_populates='venue_calendar')

@@ -4,13 +4,14 @@ from database import SessionLocal
 from models import Person
 from dotenv import load_dotenv
 load_dotenv()
-from routes import auth, calendar
+from routes import auth, calendar,venues
 
 
 
 app = FastAPI()
 app.include_router(auth.router, tags=["Autorizzazione"])
 app.include_router(calendar.router, prefix="/calendar", tags=["Calendario"])
+app.include_router(venues.router)
 
 def get_db():
     db = SessionLocal()
