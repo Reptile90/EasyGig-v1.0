@@ -232,11 +232,13 @@ def register_promoter(
             privacy_accettata = user.privacy,
             telefono = user.telefono,
             city_id = user.city_id,
-            tipo_utente = PersonType.promoter
+            tipo_utente = PersonType.promoter,
+            organization_id=nuova_organizzazione.id
         )
         #aggiungo il promoter
         db.add(nuovo_utente)
         db.commit()
+        return {"message": "Registrazione effettuata con successo", "id": nuovo_utente.id, "organization_id": nuova_organizzazione.id}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail= f"Errore durante la registrazione: {str(e)}")
