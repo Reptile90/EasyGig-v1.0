@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from database import SessionLocal
-from models import Person, StateAccountType, Invitation, StateInvitation, pers_band, Band,PersonType
+from models import Person, StateAccountType, Invitation, StateInvitation, pers_band, Band,PersonType,Venue
 from schemas import UserBase,ArtistRegister,DirectorRegister,PromoterRegister
 import uuid
 import os
@@ -151,6 +151,52 @@ def register_artist(
         db.rollback()
         print(f"Errore: {e}")
         raise HTTPException(status_code=500, detail="Errore durante la registrazione")
+    
+    
+    
+#ENDPOINT PER LA REGISTRAZIONE DEL DIRETTORE ARTISTICO
+@router.post("/register/artisticDirector")
+def register_director(
+    user:DirectorRegister,
+    db: Session = Depends(get_db)
+):
+    #Controllo se la mail è già presente nel database
+    if db.query(Person).filter(Person.email == user.email).first():
+        raise HTTPException(status_code=400, detail="Email già registrata")
+    
+    try:
+        password_hash = pwd_context.hash(user.password) #salvo l'hash della password
+        nuovo_utente = Person(
+            nome = user.nome,
+            cognome = user.cognome,
+            email = user.email,
+            password_hash = password_hash,
+            privacy_accettata = user.privacy,
+            telefono = user.telefono,
+            city_id = user.city_id,
+            tipo_utente = PersonType.direttoreArtistico
             
+        )
+        #aggiungo il nuovo direttore
+        db.add(nuovo_utente)
+        db.flush()
+        #creo il locale
+        nuova_venue = Venue(
+            nome = user.nome_locale,
+            email = user.email_locale,
+            telefono = user.telefono_locale,
+            tipo_sale = user.tipo_sala,
+            capienza = user.capienza,
+            strumentazione = user.strumentazione,
+            city_id = user.city_id,
+            direttore_id = nuovo_utente.id
+        )
+        #aggiunto il locale al database
+        db.add(nuova_venue)
+        return {"message": "Registrazione effettuata con successo", "id": nuovo_utente.id, "venue_id": nuova_venue.id}
+    #errore in caso di mancata comunicazione del server
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail= f"Errore durante la registrazione: {str(e)}")
     
     
