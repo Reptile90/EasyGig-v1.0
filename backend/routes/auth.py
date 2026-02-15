@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from database import SessionLocal
-from models import Person, StateAccountType, Invitation, StateInvitation, pers_band, Band,PersonType,Venue
+from models import Person, StateAccountType, Invitation, StateInvitation, pers_band, Band,PersonType,Venue,BookingOrganization
 from schemas import UserBase,ArtistRegister,DirectorRegister,PromoterRegister
 import uuid
 import os
@@ -165,6 +165,7 @@ def register_director(
         raise HTTPException(status_code=400, detail="Email già registrata")
     
     try:
+        #creo il direttore
         password_hash = pwd_context.hash(user.password) #salvo l'hash della password
         nuovo_utente = Person(
             nome = user.nome,
@@ -193,10 +194,52 @@ def register_director(
         )
         #aggiunto il locale al database
         db.add(nuova_venue)
+        db.commit()
         return {"message": "Registrazione effettuata con successo", "id": nuovo_utente.id, "venue_id": nuova_venue.id}
     #errore in caso di mancata comunicazione del server
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail= f"Errore durante la registrazione: {str(e)}")
+    
+    
+#ENDPOINT PER REGISTRAZIONE DEL PROMOTER
+@router.post("/register/promoter")
+def register_promoter(
+    user:PromoterRegister,
+    db:Session = Depends(get_db)
+):
+    #Controllo se la mail è già presente nel database
+    if db.query(Person).filter(Person.email == user.email).first():
+        raise HTTPException(status_code=400, detail = "Email già registrata")
+    
+    try:
+        
+        #creo l'organizzazione
+        nuova_organizzazione = BookingOrganization(
+         nome = user.nome_organizzazione,
+         tipo_booking = user.tipo_organizzazione
+        )
+        db.add(nuova_organizzazione)
+        db.flush()
+        
+        #creo il promoter
+        password_hash = pwd_context.hash(user.password)#salvo l'hash della password
+        nuovo_utente = Person(
+            nome = user.nome,
+            cognome = user.cognome,
+            email = user.email,
+            password_hash = password_hash,
+            privacy_accettata = user.privacy,
+            telefono = user.telefono,
+            city_id = user.city_id,
+            tipo_utente = PersonType.promoter
+        )
+        #aggiungo il promoter
+        db.add(nuovo_utente)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail= f"Errore durante la registrazione: {str(e)}")
+        
     
     
