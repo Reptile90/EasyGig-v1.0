@@ -1,16 +1,17 @@
 from typing import List, Optional
 from pydantic import BaseModel,EmailStr
 from datetime import date, time
-from models import PersonType
+from models import PersonType,VenueType,OrganizationType
 
 
-class UserCreate(BaseModel):
+class UserBase(BaseModel):
     nome: str
     cognome: str
     email: EmailStr
     password: str
     privacy: bool
-    tipo_utente: PersonType
+    telefono: str
+    city_id: int
     
     # Campi opzionali per la creazione della Band
     nome_band: Optional[str] = None
@@ -19,6 +20,22 @@ class UserCreate(BaseModel):
     # Campo opzionale per chi viene invitato
     token_invito: Optional[str] = None
     
+class ArtistRegister(UserBase):
+    nome_band: Optional[str] = None
+    emails_soci: Optional[List[EmailStr]] = None
+    token_invito: Optional[str] = None
+    
+class DirectorRegister(UserBase):
+    nome_locale: str
+    email_locale: EmailStr
+    telefono_locale: str
+    tipo_sala: VenueType
+    capienza: int
+    strumentazione: str
+
+class PromoterRegister(UserBase):
+    nome_organizzazione: str
+    tipo_organizzazione: OrganizationType
     
 class CalendarCreate(BaseModel):
     data:date

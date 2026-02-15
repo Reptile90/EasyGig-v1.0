@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from database import SessionLocal
-from models import Person, StateAccountType, Invitation, StateInvitation, pers_band, Band
-from schemas import UserCreate
+from models import Person, StateAccountType, Invitation, StateInvitation, pers_band, Band,PersonType
+from schemas import UserBase,ArtistRegister,DirectorRegister,PromoterRegister
 import uuid
 import os
 
@@ -63,79 +63,94 @@ async def send_invitation_email(email_to: EmailStr, token: str, sender_name: str
     await fm.send_message(message)
 
 
-@router.post("/register")
-def register(user: UserCreate, background_tasks: BackgroundTasks,  db: Session = Depends(get_db)):
+#ENDPOINT PER LA REGISTRAZIONE DEGLI ARTISTI
+@router.post("/register/artist")
+def register_artist(
+    user:ArtistRegister,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    #Controllo se la mail è già presente nel db
+    if db.query(Person).filter(Person.email == user.email).first():
+        raise HTTPException(status_code=400, detail="Email già registrata")
+    
+    #Controllo se ha l'invito
     invito = None
-    if user.token_invito:
+    if user.token_invito: #Se c'è l'invito faccio una query per confrontare il token inviato.
         invito = db.query(Invitation).filter(
             Invitation.token == user.token_invito,
-            Invitation.stato == StateInvitation.pending).first()
-        if not invito:
-            raise HTTPException(
-                status_code=409, detail="Errore, invito non valido o scaduto")
-
-    email_esistente = db.query(Person).filter(
-        Person.email == user.email).first()
-    if email_esistente:
-        raise HTTPException(status_code=400, detail="Email già registrata")
+            Invitation.stato == StateInvitation.pending
+        ).first()
+        if not invito: #se dal controllo l'invito non risulta valido mando un eccezione
+            raise HTTPException(status_code=409, detail="Invito non valido o scaduto")
+    
     try:
-        password_encrypted = pwd_context.hash(user.password)
-        nuovo_utente = Person(
-            nome=user.nome,
-            cognome=user.cognome,
-            email=user.email,
-            password_hash=password_encrypted,
-            privacy_accettata=user.privacy,
-            telefono="0000000000",
-            city_id=1,
-            tipo_utente=user.tipo_utente
+        #Creo l'utente se non esiste già
+        password_hash = pwd_context.hash(user.password) #salvo l'hash della password
+        nuovo_utente = Person( #registro i dati dell'utente in ingresso
+            nome = user.nome,
+            cognome = user.cognome,
+            email = user.email,
+            password_hash = password_hash,
+            privacy_accettata = user.privacy,
+            telefono = user.telefono,
+            city_id = user.city_id,
+            tipo_utente = PersonType.artista
         )
         db.add(nuovo_utente)
-        db.commit()
-        db.refresh(nuovo_utente)
-
+        db.flush() #Ottengo l'ID
+        
+        #Nel caso voglia spedire gli inviti alla registrazione dei componenti della band
         inviti_da_spedire = []
-
+        #CASO 1: Si unisce ad una band esistente tramite l'invito
         if invito:
-            nuovo_legame = pers_band(
-                person_id=nuovo_utente.id, band_id=invito.band_id)
-            db.add(nuovo_legame)
-            invito.stato = StateInvitation.accepted  # type: ignore
+            db.add(pers_band(person_id = nuovo_utente.id, band_id = invito.band_id))
+            invito.stato = StateInvitation.accepted # type: ignore
             invito.person_id = nuovo_utente.id
-
-        elif user.tipo_utente == "artista" and getattr(user, 'nome_band', None):
-            nuova_band = Band(nome=user.nome_band, cachet=0,
-                              categoria="inedita", genere_id=1)
+        #CASO2: La band non esiste, viene create e si associa
+        elif user.nome_band:
+            nuova_band = Band(
+                nome = user.nome_band,
+                cachet = 0, #default
+                categoria = "inedita", #default
+                genere_id=1 #default
+            )
             db.add(nuova_band)
             db.flush()
-
-            db.add(pers_band(person_id=nuovo_utente.id, band_id=nuova_band.id))
-
-            if getattr(user, 'emails_soci', None):
-                for mail_socio in user.emails_soci:  # type: ignore
-                    token_unico = str(uuid.uuid4())
+            
+            #Associo la band l'utente
+            db.add(pers_band(person_id = nuovo_utente.id, band_id = nuova_band.id))
+            
+            #Nel caso volesse invitare gli altri componenti
+            if user.emails_soci:
+                for mail in user.emails_soci:
+                    token = str(uuid.uuid4())
                     db.add(Invitation(
-                        email=mail_socio, token=token_unico,
-                        band_id=nuova_band.id, sender_id=nuovo_utente.id
+                        email = mail,
+                        token = token,
+                        band_id = nuova_band.id,
+                        sender_id = nuovo_utente.id
                     ))
-                    inviti_da_spedire.append(
-                        {"email": mail_socio, "token": token_unico, "band": nuova_band.nome})
-
+        #Commit finale
         db.commit()
-
-        for inv in inviti_da_spedire:
+        
+        #Spedisco gli inviti
+        for invito in inviti_da_spedire:
             background_tasks.add_task(
                 send_invitation_email,
-                inv["email"],
-                inv["token"],
-                nuovo_utente.nome,  # type: ignore
-                inv["band"]
+                invito["email"],
+                invito["token"],
+                nuovo_utente.nome, # type: ignore
+                invito["band"]
+                
             )
-
-        return {"message": "Registrazione avvenuta con successo", "id_utente": nuovo_utente.id}
-
+        #messaggio di conferma
+        return {"message": "Registrazione artista avvenuta con successo", "id": nuovo_utente.id}
+    
     except Exception as e:
         db.rollback()
-        print(f"Errore registrazione: {e}")
-        raise HTTPException(
-            status_code=500, detail="Errore interno durante il salvataggio dei dati")
+        print(f"Errore: {e}")
+        raise HTTPException(status_code=500, detail="Errore durante la registrazione")
+            
+    
+    

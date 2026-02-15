@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal
-# Assicurati di importare Person per poter fare il join sulla città
 from models import Venue, VenueType, Person
 
 def get_db(): #apro la connessione con il database
