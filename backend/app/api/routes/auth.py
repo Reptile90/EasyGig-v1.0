@@ -8,6 +8,8 @@ from app.core.database import SessionLocal
 from app.models.models import Person, StateAccountType, Invitation, StateInvitation, pers_band, Band,PersonType,Venue,BookingOrganization
 from app.schemas.schemas import UserBase,ArtistRegister,DirectorRegister,PromoterRegister,UserLogin
 from datetime import datetime, timedelta, timezone
+from fastapi.security import  OAuth2PasswordBearer
+from jwt import ExpiredSignatureError,PyJWTError
 import jwt
 import uuid
 import os
@@ -30,6 +32,7 @@ conf = ConnectionConfig(
 router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 def get_db():
@@ -252,20 +255,23 @@ def register_promoter(
 @router.post("/login")
 def user_login(user:UserLogin, db:Session = Depends(get_db)):
     try:
+        #cerco l'utente
         utente_trovato = db.query(Person).filter(Person.email == user.email).first()
-        if not utente_trovato:
+        
+        if not utente_trovato: #se l'utente non esiste lancio un eccezione
             raise HTTPException(status_code = 401, detail = "Credenziali non valide")
-        
+        #se trovo l'utente faccio l'hash della password
         password_hash = utente_trovato.password_hash
-        
+        #verifico che la password digitata sia uguale alle credenziali presenti nel db
         if not pwd_context.verify(user.password,password_hash): # type: ignore
-            raise HTTPException(status_code = 401 , detail= "Credenziali non valide")
+            raise HTTPException(status_code = 401 , detail= "Credenziali non valide") #se non trovo le credenziali lancio un errore
         
+        #creo le variabile per il contenuto del token JSON
         SECRET_KEY = os.getenv("SECRET_KEY")
         exp = datetime.now(timezone.utc)+ timedelta(hours=2)
         
         payload = {"sub":str(utente_trovato.id),"exp": exp}
-        
+        #creo il token JSON con jwt
         token_jwt = jwt.encode(payload= payload,key=str(SECRET_KEY),algorithm="HS256")
         return {
             "access_token":token_jwt,
@@ -274,6 +280,36 @@ def user_login(user:UserLogin, db:Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail= f"Errore durante il login: {str(e)}")
         
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        #recupero la chiave segreta
+        SECRET_KEY = os.getenv("SECRET_KEY")
+        #decodifico il token
+        payload = jwt.decode(token, key=str(SECRET_KEY), algorithms=["HS256"])
+        #con il contenuto del token vado a pescare dal database l'id e lo confronto
+        utente = db.query(Person).filter(Person.id == payload["sub"]).first()
+        #se non esiste lancio un errore 401
+        if not utente:
+            raise HTTPException(status_code=401, detail="Errore, utente non trovato")
+        #ritorno l'utente
+        return utente
+    
+    except ExpiredSignatureError:
+        # Errore specifico: il token ha superato la data "exp"
+        raise HTTPException(status_code=401, detail="Token scaduto, effettua nuovamente il login")
+    except PyJWTError:
+        # Errore specifico: il token è malformato o la firma non corrisponde
+        raise HTTPException(status_code=401, detail="Credenziali di autenticazione non valide")
+    except Exception as e:
+        # Qualsiasi altro errore
+        raise HTTPException(status_code=500, detail=f"Errore interno: {str(e)}")
+    
+    
+@router.get("/me") #ritorna le informazione dell'utente dopo aver richiamata la funzione get_current user per la verifica del token
+def profile_info( utente:Person = Depends(get_current_user)):
+    return utente
+    
     
         
     
