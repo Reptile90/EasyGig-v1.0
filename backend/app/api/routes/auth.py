@@ -251,25 +251,29 @@ def register_promoter(
     
 @router.post("/login")
 def user_login(user:UserLogin, db:Session = Depends(get_db)):
-    utente_trovato = db.query(Person).filter(Person.email == user.email).first()
-    if not utente_trovato:
-        raise HTTPException(status_code = 401, detail = "Credenziali non valide")
+    try:
+        utente_trovato = db.query(Person).filter(Person.email == user.email).first()
+        if not utente_trovato:
+            raise HTTPException(status_code = 401, detail = "Credenziali non valide")
+        
+        password_hash = utente_trovato.password_hash
+        
+        if not pwd_context.verify(user.password,password_hash): # type: ignore
+            raise HTTPException(status_code = 401 , detail= "Credenziali non valide")
+        
+        SECRET_KEY = os.getenv("SECRET_KEY")
+        exp = datetime.now(timezone.utc)+ timedelta(hours=2)
+        
+        payload = {"sub":str(utente_trovato.id),"exp": exp}
+        
+        token_jwt = jwt.encode(payload= payload,key=str(SECRET_KEY),algorithm="HS256")
+        return {
+            "access_token":token_jwt,
+            "token_type": "bearer"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail= f"Errore durante il login: {str(e)}")
+        
     
-    password_hash = utente_trovato.password_hash
-    
-    if not pwd_context.verify(user.password,password_hash): # type: ignore
-        raise HTTPException(status_code = 401 , detail= "Credenziali non valide")
-    
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    exp = datetime.now(timezone.utc)+ timedelta(hours=2)
-    
-    payload = {"sub":str(utente_trovato.id),"exp": exp}
-    
-    token_jwt = jwt.encode(payload= payload,key=str(SECRET_KEY),algorithm="HS256")
-    
-    return {
-        "access_token":token_jwt,
-        "token_type": "bearer"
-    }
         
     
