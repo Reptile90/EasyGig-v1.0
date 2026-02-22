@@ -52,3 +52,8 @@ class CalendarSchema(CalendarCreate):
         
 class SlotBooking(BaseModel):
     artista_id:int
+    
+    
+class UserLogin(BaseModel):
+    email:str
+    password:str
