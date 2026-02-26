@@ -72,7 +72,12 @@ class VenueUpdate(BaseModel):
     
 
 class PromoterUpdate(BaseModel):
-    nome:Optional[str]
-    cognome:Optional[str]
-    city_id:Optional[int]
-    descrizione:Optional[str]
+    nome:Optional[str]=None
+    cognome:Optional[str]=None
+    city_id:Optional[int]=None
+    descrizione:Optional[str]=None
+    
+class BandUpdate(BaseModel):
+    nome: Optional[str] = None
+    genere: Optional[str] = None
+    numero_membri: Optional[int] = None
