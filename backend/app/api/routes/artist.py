@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
-from app.models.models import Person, Band, PersonType
+from app.models.models import Person, PersonType
 from auth import get_current_user
 from auth import get_db
 from backend.app.schemas.schemas import ArtistUpdate
