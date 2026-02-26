@@ -14,7 +14,7 @@ def get_venues(
     nome: str = None,  # type: ignore
     city_id: int = None,  # type: ignore
     tipo: VenueType = None,  # type: ignore
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
 
     query = db.query(Venue)
@@ -33,7 +33,7 @@ def get_venues(
 @router.put("/me")
 def update_venue(
     update: VenueUpdate,
-    db=Depends(get_db),
+    db:Session=Depends(get_db),
     current_user: Person = Depends(get_current_user),
 ):
 
@@ -58,14 +58,14 @@ def update_venue(
         )
     # controlli per verifica dati
     if update.capienza is not None:
-        venue.capienza = update.capienza
+        venue.capienza = update.capienza # type: ignore
 
     if update.tipo_sala is not None:
-        venue.tipo_sala = update.tipo_sala
+        venue.tipo_sala = update.tipo_sala # type: ignore
 
     if update.strumentazione is not None:
-        venue.strumentazione = update.strumentazione
-
+        venue.strumentazione = update.strumentazione # type: ignore
+    #salvataggio del db
     db.commit()
     db.refresh(venue)
 

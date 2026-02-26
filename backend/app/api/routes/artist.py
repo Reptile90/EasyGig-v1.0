@@ -25,7 +25,7 @@ def update_artist(
     
     if update.file_path:
         current_user.file_path = update.file_path # type: ignore
-    
+    #salvo nel db
     db.commit()
     db.refresh(current_user)
     return current_user

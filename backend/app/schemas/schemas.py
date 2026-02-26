@@ -69,3 +69,10 @@ class VenueUpdate(BaseModel):
     tipo_sala:Optional[VenueType]
     capienza:Optional[int]
     strumentazione:Optional[str]
+    
+
+class PromoterUpdate(BaseModel):
+    nome:Optional[str]
+    cognome:Optional[str]
+    city_id:Optional[int]
+    descrizione:Optional[str]
