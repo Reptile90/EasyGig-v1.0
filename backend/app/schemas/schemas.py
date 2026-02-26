@@ -63,3 +63,9 @@ class UserLogin(BaseModel):
 class ArtistUpdate(BaseModel):
     link_streaming:Optional[str]=None
     file_path:Optional[str]=None
+    
+    
+class VenueUpdate(BaseModel):
+    tipo_sala:Optional[VenueType]
+    capienza:Optional[int]
+    strumentazione:Optional[str]
