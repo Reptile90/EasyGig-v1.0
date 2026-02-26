@@ -57,3 +57,9 @@ class SlotBooking(BaseModel):
 class UserLogin(BaseModel):
     email:str
     password:str
+    
+    
+    
+class ArtistUpdate(BaseModel):
+    link_streaming:Optional[str]=None
+    file_path:Optional[str]=None
