@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.core.database import SessionLocal
 from app.models.models import Venue, VenueType, Person, PersonType
 from auth import get_current_user, get_db
 from backend.app.schemas.schemas import VenueUpdate
