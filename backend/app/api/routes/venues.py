@@ -50,8 +50,7 @@ def update_venue(
             detail="Errore, occorre inserire le informazioni di capiena, tipo_sala e strumentazione",
         )
     # recupero i dati della venue
-    venue = db.query(Venue).filter(
-        Venue.id_direttore == current_user.id).first()
+    venue = db.query(Venue).filter(Venue.id_direttore == current_user.id).first()
     # se non trovo l'id lancio un errore
     if not venue:
         raise HTTPException(
