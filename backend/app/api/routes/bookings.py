@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends,HTTPException
 from sqlalchemy.orm import Session
 from auth import get_db,get_current_user
-from backend.app.models.models import Booking, Slot, Person, BookingState, SlotType,Venue,Calendar
+from backend.app.models.models import Booking, PersonType, Slot, Person, BookingState, SlotType,Venue,Calendar,Band, pers_band
 from backend.app.schemas.schemas import BookingReject
 
 
@@ -67,3 +67,16 @@ def reject_booking(
         
     db.commit()
     return {"message": "Prenotazione rifiutata", "ragione": booking.ragione}
+
+
+
+@router.get("/my-bookings")
+def get_my_bookings(
+    db:Session = Depends(get_db),
+    current_user:Person = Depends(get_current_user)
+):
+    if current_user.tipo_utente != PersonType.artista: # type: ignore
+        raise HTTPException(status_code=403, detail="Accesso riservato agli artisti")
+    my_bookings = db.query(Booking).join(Band).join(pers_band).filter(pers_band.person_id == current_user.id).all()
+    
+    return my_bookings
