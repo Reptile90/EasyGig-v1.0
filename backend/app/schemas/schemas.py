@@ -81,3 +81,7 @@ class BandUpdate(BaseModel):
     nome: Optional[str] = None
     genere: Optional[str] = None
     numero_membri: Optional[int] = None
+    
+    
+class BookingReject(BaseModel):
+    ragione:str
