@@ -32,8 +32,6 @@ def update_artist(
     db.refresh(current_user)
     return current_user
 
- # Assicurati di averlo nel file schemas
-
 
 router = APIRouter(prefix="/artists", tags=["Artists"])
 

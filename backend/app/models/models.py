@@ -260,8 +260,9 @@ class Booking(Base):
     iniziato_da = Column(Enum(PersonType), nullable=False, default='artista')
     
     #Relazioni
-    band_id = Column(Integer, ForeignKey('band.id'), nullable=False)
-    slot_id = Column(Integer, ForeignKey('slot.id'), nullable=False)
+    band_id = Column(Integer, ForeignKey('band.id'), nullable=True)
+    slot_id = Column(Integer, ForeignKey('slot.id'))
+    promoter_id = Column(Integer,ForeignKey('person.id'), nullable=True)
     bands_bookings = relationship("Band", back_populates='bookings')
     slot_item = relationship("Slot")
     chats = relationship('Chat', back_populates='chat_prenotazioni')
