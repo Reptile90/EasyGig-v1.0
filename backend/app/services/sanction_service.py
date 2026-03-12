@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.models import Sanction, StatoAccount, StateAccountType, Booking, BookingState, SlotType, Person, Venue, Calendar, Slot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.core.database import SessionLocal
-from app.services.notifier import send_ban_notification, send_reminder_notification, send_strike_notification
-
+from app.services.notifier import send_ban_notification, send_reminder_notification, send_strike_notification,send_unban_notification
+from fastapi import Depends, HTTPException
+from app.api.routes.auth import get_db,get_current_user
 # funzione per calcolare la scadenza della prenotazione
 
 
@@ -144,8 +145,10 @@ scheduler.start()
 
 async def check_unban(db: Session):
     ora_attuale = datetime.now()
-    # Troviamo tutti i ban scaduti
-    sanction_records = db.query(Sanction).filter(
+    # 1. Recuperiamo i ban scaduti caricando subito i dati della persona
+    sanction_records = db.query(Sanction).options(
+        joinedload(Sanction.persona_sanzionata)
+    ).filter(
         Sanction.data_fine_ban != None,
         Sanction.data_fine_ban <= ora_attuale
     ).all()
@@ -153,22 +156,63 @@ async def check_unban(db: Session):
     if not sanction_records:
         return
 
-    for direttore in sanction_records:
+    tasks_notifiche = []
+
+    for record in sanction_records:
         try:
-            # Recuperiamo lo stato dell'account
+            direttore = record.persona_sanzionata
             stato = db.query(StatoAccount).filter(
-                StatoAccount.person_id == direttore.person_id).first()
+                StatoAccount.person_id == record.person_id).first()
 
             if stato:
-                direttore.data_fine_ban = None  # type: ignore
-                stato.stato = StateAccountType.attivo  # type: ignore
+                record.data_fine_ban = None # type: ignore
+                stato.stato = StateAccountType.attivo # type: ignore
+                
+                # 2. Prepariamo la notifica di bentornato
+                tasks_notifiche.append(
+                    send_unban_notification(direttore.email, direttore.nome)
+                )
         except Exception as e:
-            print(
-                f"Errore durante la preparazione unban per {direttore.person_id}: {e}")
-            continue  # Passiamo al prossimo senza bloccare tutto
+            print(f"Errore durante lo sblocco di {record.person_id}: {e}")
 
     try:
-        db.commit()  # Salvataggio unico per tutti gli sblocchi
+        db.commit()
+        # 3. Inviamo tutte le mail insieme
+        if tasks_notifiche:
+            await asyncio.gather(*tasks_notifiche)
     except Exception as e:
-        print(f"Errore durante il salvataggio degli sblocchi: {e}")
+        print(f"Errore nel salvataggio finale: {e}")
         db.rollback()
+        
+async def run_scheduled_unban():
+    db = SessionLocal()
+    try:
+        await check_unban(db)
+    finally:
+        db.close()
+        
+        
+scheduler.add_job(
+    run_scheduled_unban,
+    'interval',
+    hours=1,
+    id='hourly_unban_check'
+)
+
+async def check_account_not_frozen(
+    db: Session = Depends(get_db),
+    current_user: Person = Depends(get_current_user)
+):
+    # Recuperiamo lo stato e la sanzione
+    stato_utente = db.query(StatoAccount).filter(StatoAccount.person_id == current_user_id).first()
+    sanction = db.query(Sanction).filter(Sanction.person_id == current_user_id).first()
+
+    # Se l'account è congelato, blocchiamo l'accesso 🧊
+    if stato_utente and stato_utente.stato == StateAccountType.congelato: # type: ignore
+        data_fine = sanction.data_fine_ban if sanction else "data da destinarsi"
+        raise HTTPException(
+            status_code= 403,
+            detail=f"Accesso negato. Il tuo account è bloccato fino al {data_fine} per inattività nelle prenotazioni."
+        )
+    
+    return True

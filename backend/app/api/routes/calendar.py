@@ -4,6 +4,7 @@ from app.core.database import SessionLocal
 from fastapi import APIRouter,Depends, HTTPException
 from app.models.models import Calendar,Slot,Booking, enum
 from app.schemas.schemas import CalendarCreate,CalendarSchema,SlotBooking
+from app.services.sanction_service import check_account_not_frozen
 import os
 from dotenv import load_dotenv
 from fastapi_mail import ConnectionConfig,FastMail,MessageSchema, MessageType
@@ -55,7 +56,7 @@ def get_db(): #apro la connessione con il database
 
 #Endpoint POST per la creazione di un calendario e di relativi slot "a scelta" del direttore artistico
 @router.post("/", response_model = CalendarSchema)
-def create_calendar(calendar_data:CalendarCreate, db:Session = Depends(get_db)):
+def create_calendar(calendar_data:CalendarCreate, db:Session = Depends(get_db),_= Depends(check_account_not_frozen)):
     try:
         data = calendar_data.data
         data_inizio = calendar_data.ora_inizio
@@ -83,7 +84,7 @@ def create_calendar(calendar_data:CalendarCreate, db:Session = Depends(get_db)):
 
 #Enndpoint GET per recuperare tutti i calendari.
 @router.get("/", response_model=list[CalendarSchema])
-def get_calendars(db:Session = Depends(get_db)):
+def get_calendars(db:Session = Depends(get_db),_=Depends(check_account_not_frozen)):
     try:
      calendar_list = db.query(Calendar).all()
     except Exception as error:
@@ -93,7 +94,7 @@ def get_calendars(db:Session = Depends(get_db)):
 
 #ENDPOINT POST per creare la prenotazione.
 @router.post("/{slot_id}")
-async def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db)):
+async def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_db),_=Depends(check_account_not_frozen)):
     slot= None
     try:
         slot = db.query(Slot).filter(Slot.id==slot_id).first() #cerco lo slot

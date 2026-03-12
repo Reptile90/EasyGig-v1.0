@@ -3,7 +3,7 @@ import os
 
 conf = ConnectionConfig(
     MAIL_USERNAME=str(os.getenv('MAIL_USERNAME', '')),
-    MAIL_PASSWORD=str(os.getenv('MAIL_PASSWORD', '')), # type: ignore
+    MAIL_PASSWORD=str(os.getenv('MAIL_PASSWORD', '')),  # type: ignore
     MAIL_FROM=str(os.getenv('MAIL_FROM', '')),
     MAIL_PORT=int(str(os.getenv('MAIL_PORT', '587'))),
     MAIL_SERVER=str(os.getenv('MAIL_SERVER', '')),
@@ -13,29 +13,31 @@ conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
-#funzione per calcolare quanti ban ha e rilasciare il risultato nell'html
-def calculate_ban_duration(current_bans:int):
+# funzione per calcolare quanti ban ha e rilasciare il risultato nell'html
+
+
+def calculate_ban_duration(current_bans: int):
     rules = {
-        0:7,
-        "default":14
+        0: 7,
+        "default": 14
     }
-    days_to_add = rules.get(current_bans,rules["default"]) # type: ignore
+    days_to_add = rules.get(current_bans, rules["default"])  # type: ignore
     return days_to_add
 
 
-async def send_mail(subject:str, recipient:str, body_html:str):
-    
+async def send_mail(subject: str, recipient: str, body_html: str):
+
     message = MessageSchema(
         subject=subject,
-        recipients=[recipient], # type: ignore
+        recipients=[recipient],  # type: ignore
         body=body_html,
         subtype=MessageType.html
     )
     fm = FastMail(conf)
     await fm.send_message(message)
-    
-    
-async def send_strike_notification(email_to:str, director_name:str, strike_count:int,current_bans:int):
+
+
+async def send_strike_notification(email_to: str, director_name: str, strike_count: int, current_bans: int):
     subject = "Avviso di Strike! - EasyGIG"
     html = f"""
     <html>
@@ -49,10 +51,10 @@ async def send_strike_notification(email_to:str, director_name:str, strike_count
         </body>
     </html>
     """
-    await send_mail(subject,email_to,html)
-    
-    
-async def send_ban_notification(email_to:str, director_name:str, current_bans:int):
+    await send_mail(subject, email_to, html)
+
+
+async def send_ban_notification(email_to: str, director_name: str, current_bans: int):
     subject = "Avviso di Ban - EasyGIG"
     html = f"""
     <html>
@@ -65,15 +67,15 @@ async def send_ban_notification(email_to:str, director_name:str, current_bans:in
         </body>
     </html>
     """
-    await send_mail(subject, email_to,html)
-    
-    
+    await send_mail(subject, email_to, html)
+
+
 async def send_reminder_notification(
-    email_to:str,
-    director_name:str,
-    band_name:str,
-    data_evento:str,
-    giorni_rimanenti:int
+    email_to: str,
+    director_name: str,
+    band_name: str,
+    data_evento: str,
+    giorni_rimanenti: int
 ):
     subject = f"Promemoria: Una prenotazione scade tra {giorni_rimanenti} giorni!"
     html = f"""
@@ -92,5 +94,17 @@ async def send_reminder_notification(
         </body>
     </html>
     """
-    await send_mail(subject, email_to,html)
-    
+    await send_mail(subject, email_to, html)
+
+
+async def send_unban_notification(email_to: str, director_name: str):
+    subject = f"BENTORNATO!"
+    html = f"""
+    <html>
+        <body>
+            <h2>Ciao {director_name},</h2>
+            <p>Ora puoi riprendere le attività del tuo locale!</p>
+        </body>
+    </html>
+    """
+    await send_mail(subject, email_to, html)
