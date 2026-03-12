@@ -207,7 +207,7 @@ async def check_account_not_frozen(
     stato_utente = db.query(StatoAccount).filter(StatoAccount.person_id == current_user.id).first()
     sanction = db.query(Sanction).filter(Sanction.person_id == current_user.id).first()
 
-    # Se l'account è congelato, blocchiamo l'accesso 🧊
+    # Se l'account è congelato, blocchiamo l'accesso
     if stato_utente and stato_utente.stato == StateAccountType.congelato: # type: ignore
         data_fine = sanction.data_fine_ban if sanction else "data da destinarsi"
         raise HTTPException(
