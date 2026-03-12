@@ -4,7 +4,7 @@ from app.core.database import SessionLocal
 from app.models.models import Person
 from dotenv import load_dotenv
 load_dotenv()
-from app.api.routes import auth, calendar,venues,artist,promoter
+from app.api.routes import auth, calendar,venues,artist,promoter,bookings
 
 
 
@@ -14,6 +14,7 @@ app.include_router(calendar.router, prefix="/calendar", tags=["Calendario"])
 app.include_router(venues.router)
 app.include_router(artist.router)
 app.include_router(promoter.router)
+app.include_router(bookings.router)
 
 def get_db():
     db = SessionLocal()

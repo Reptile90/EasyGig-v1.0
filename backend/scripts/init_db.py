@@ -1,3 +1,8 @@
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.core.database import engine
 from sqlalchemy import text
 import app.models.models as models
@@ -241,7 +246,7 @@ def init_db():
                 SELECT direttore_id INTO v_colpevole FROM venue WHERE id = r.venue_id;
             
             -- Se ha iniziato il promoter, deve rispondere l'Artista (un membro della band)
-            ELSIF r.iniziato_da = 'promoter' THE
+            ELSIF r.iniziato_da = 'promoter' THEN
                 SELECT person_id INTO v_colpevole FROM pers_band WHERE band_id = r.band_id LIMIT 1;
             END IF;
             

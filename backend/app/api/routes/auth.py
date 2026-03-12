@@ -17,11 +17,11 @@ import os
 load_dotenv()
 
 conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv('MAIL_USERNAME'),  # type: ignore
-    MAIL_PASSWORD=os.getenv('MAIL_PASSWORD'),  # type: ignore
-    MAIL_FROM=os.getenv('MAIL_FROM'),  # type: ignore
-    MAIL_PORT=int(os.getenv('MAIL_PORT')),  # type: ignore
-    MAIL_SERVER=os.getenv('MAIL_SERVER'),  # type: ignore
+    MAIL_USERNAME=str(os.getenv('MAIL_USERNAME', '')),
+    MAIL_PASSWORD=str(os.getenv('MAIL_PASSWORD', '')), # type: ignore
+    MAIL_FROM=str(os.getenv('MAIL_FROM', '')),
+    MAIL_PORT=int(str(os.getenv('MAIL_PORT', '587'))),
+    MAIL_SERVER=str(os.getenv('MAIL_SERVER', '')),
     MAIL_FROM_NAME="EasyGIG Team",
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
@@ -59,7 +59,7 @@ async def send_invitation_email(email_to: EmailStr, token: str, sender_name: str
 
     message = MessageSchema(
         subject=f"Invito per la band {band_name}",
-        recipients=[email_to],  # type: ignore
+        recipients=[str(email_to)], # type: ignore
         body=html,
         subtype=MessageType.html
     )
@@ -145,7 +145,7 @@ def register_artist(
                 send_invitation_email,
                 invito["email"],
                 invito["token"],
-                nuovo_utente.nome, # type: ignore
+                str(nuovo_utente.nome),
                 invito["band"]
                 
             )
@@ -263,7 +263,7 @@ def user_login(user:UserLogin, db:Session = Depends(get_db)):
         #se trovo l'utente faccio l'hash della password
         password_hash = utente_trovato.password_hash
         #verifico che la password digitata sia uguale alle credenziali presenti nel db
-        if not pwd_context.verify(user.password,password_hash): # type: ignore
+        if not pwd_context.verify(user.password, str(password_hash)):
             raise HTTPException(status_code = 401 , detail= "Credenziali non valide") #se non trovo le credenziali lancio un errore
         
         #creo le variabile per il contenuto del token JSON

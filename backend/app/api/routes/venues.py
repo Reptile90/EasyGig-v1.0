@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models.models import Venue, VenueType, Person, PersonType
-from auth import get_current_user, get_db
-from backend.app.schemas.schemas import VenueUpdate
+from app.api.routes.auth import get_current_user, get_db
+from app.schemas.schemas import VenueUpdate
 
 
 router = APIRouter(prefix="/venues", tags=["Venues"])
@@ -10,9 +10,9 @@ router = APIRouter(prefix="/venues", tags=["Venues"])
 
 @router.get("/")
 def get_venues(
-    nome: str = None,  # type: ignore
-    city_id: int = None,  # type: ignore
-    tipo: VenueType = None,  # type: ignore
+    nome: str | None = None,
+    city_id: int | None = None,
+    tipo: VenueType | None = None,
     db: Session = Depends(get_db)
 ):
 
@@ -37,7 +37,7 @@ def update_venue(
 ):
 
     # controllo se l'utente che sta cercando di modificare è un direttore artistico
-    if current_user.tipo_utente != PersonType.direttoreArtistico:  # type: ignore
+    if current_user.tipo_utente != PersonType.direttoreArtistico: # type: ignore
         raise HTTPException(
             status_code=403,
             detail="Accesso Negato, Quest'area è riservata al direttore artistico",

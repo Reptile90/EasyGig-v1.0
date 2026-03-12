@@ -11,7 +11,7 @@ load_dotenv()
 
 conf = ConnectionConfig(
     MAIL_USERNAME = os.getenv("MAIL_USERNAME", ""),
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD",""), # type: ignore
+    MAIL_PASSWORD = str(os.getenv("MAIL_PASSWORD","")), # type: ignore
     MAIL_FROM = os.getenv("MAIL_FROM",""),
     MAIL_PORT = int(os.getenv("MAIL_PORT",587)),
     MAIL_SERVER = os.getenv("MAIL_SERVER",""),
@@ -121,7 +121,7 @@ async def book(slot_id:int, booking_data:SlotBooking, db:Session = Depends(get_d
         
         message = MessageSchema(
             subject="Hai una nuova Prenotazione su EasyGIG!",
-            recipients=["easygigapp1.0@gmail.com"], # pyright: ignore[reportArgumentType]
+            recipients=["easygigapp1.0@gmail.com"], # type: ignore
             body=f"Ciao! È arrivata una nuova richiesta di prenotazione per lo slot {slot_id}.",
             subtype=MessageType.html
         )

@@ -104,7 +104,7 @@ class BookingOrganization(Base):
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     storico_eventi = Column(Text, nullable=True)
-    tipo_booking = Column(Enum(OrganizationType), nullable=False)
+    tipo_booking= Column(Enum(OrganizationType), nullable=False) # type: ignore
     #Relazioni
     members = relationship("Person", back_populates="organization")
     
@@ -118,7 +118,7 @@ class Person(Base):
     cognome = Column(String, nullable=False)
     telefono = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    tipo_utente = Column(Enum(PersonType))
+    tipo_utente = Column(Enum(PersonType)) # type: ignore
     password_hash = Column(String, nullable=True)
     link_streaming = Column(String, nullable=True)
     file_path = Column(String, nullable=True)
@@ -151,7 +151,7 @@ class Band(Base):
     nome = Column(String, nullable=False)
     cachet = Column(Integer, nullable=False)
     trattabile = Column(Boolean, nullable=False, default=False)
-    categoria = Column(Enum(BandCategory), nullable=False)
+    categoria= Column(Enum(BandCategory), nullable=False) # type: ignore
     
     #Relazioni
     genere_id = Column(Integer, ForeignKey('genre.id'), nullable=False)
@@ -170,7 +170,7 @@ class Invitation(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String, nullable=False)
     token = Column(String, nullable=False, unique=True)
-    stato = Column(Enum(StateInvitation), nullable=False, default='pending')
+    stato= Column(Enum(StateInvitation), nullable=False, default='pending') # type: ignore
     data_invio = Column(DateTime, nullable=False, default=func.now())
     
     # Relazioni
@@ -187,7 +187,7 @@ class Venue(Base):
     nome = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     telefono = Column(String, unique=True, nullable=False)
-    tipo_sala = Column(Enum(VenueType), nullable=False)
+    tipo_sala= Column(Enum(VenueType), nullable=False) # type: ignore
     capienza = Column(Integer, nullable=False)
     strumentazione = Column(Text, nullable=False)
     
@@ -242,7 +242,7 @@ class Slot(Base):
     id = Column(Integer, primary_key=True)
     orario_inizio = Column(Time, nullable=False)
     orario_fine = Column(Time, nullable=False)
-    stato = Column(Enum(SlotType), nullable=False, default='disponibile')
+    stato= Column(Enum(SlotType), nullable=False, default='disponibile') # type: ignore
     
     #Relazioni
     calendar_id = Column(Integer, ForeignKey('calendar.id'), nullable=False)
@@ -255,9 +255,9 @@ class Booking(Base):
     data_creazione = Column(DateTime, nullable=False, default=func.now())
     message = Column(Text, nullable=False)
     scadenza = Column(DateTime, nullable=False)
-    stato_prenotazione = Column(Enum(BookingState), nullable=False)
+    stato_prenotazione= Column(Enum(BookingState), nullable=False) # type: ignore
     ragione = Column(Text, nullable=True)
-    iniziato_da = Column(Enum(PersonType), nullable=False, default='artista')
+    iniziato_da= Column(Enum(PersonType), nullable=False, default='artista') # type: ignore
     
     #Relazioni
     band_id = Column(Integer, ForeignKey('band.id'), nullable=True)
@@ -343,20 +343,21 @@ class Score(Base):
 class Sanction(Base):
     __tablename__ = 'sanction'
     id = Column(Integer, primary_key=True)
-    contatorestrike = Column(Integer, nullable=False)
+    contatorestrike = Column(Integer, nullable=False, default= 0)
+    numero_ban = Column(Integer, nullable=False, default=0)
+    data_fine_ban = Column(DateTime, nullable=True)
     soglia_warning = Column(Integer, nullable=False)
     soglia_ban = Column(Integer, nullable=False)
-    
+    data_ultimo_ban = Column(DateTime, nullable=True)
     #Relazioni
     person_id = Column(Integer, ForeignKey('person.id'), nullable=False)
-    data_ultimo_ban = Column(DateTime, nullable=True)
     persona_sanzionata = relationship('Person', back_populates="sanzioni")
     
 #TABELLA STATO ACCOUNT
 class StatoAccount(Base):
     __tablename__ = 'stato_account'
     id = Column(Integer, primary_key=True)
-    stato = Column(Enum(StateAccountType), nullable=False)
+    stato= Column(Enum(StateAccountType), nullable=False) # type: ignore
     istante = Column(DateTime, nullable=False, default=func.now())
     
     #Relazioni
