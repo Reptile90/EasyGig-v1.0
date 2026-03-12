@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.api.routes.auth import get_db, get_current_user
+from app.services.sanction_service import check_account_not_frozen
 from app.models.models import Booking, PersonType, Slot, Person, BookingState, SlotType, Venue, Calendar, Band, pers_band
 from app.schemas.schemas import BookingReject
 from datetime import date
@@ -13,8 +14,8 @@ router = APIRouter(prefix="/bookings", tags=["Bookings"])
 def accept_booking(
     booking_id: int,
     db: Session = Depends(get_db),
-    current_user: Person = Depends(get_current_user)
-):
+    current_user: Person = Depends(get_current_user),
+    _= Depends(check_account_not_frozen)): # type: ignore
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
 
     if not booking:
@@ -46,8 +47,8 @@ def reject_booking(
     booking_id: int,
     reject_data: BookingReject,
     db: Session = Depends(get_db),
-    current_user: Person = Depends(get_current_user)
-):
+    current_user: Person = Depends(get_current_user),
+    _= Depends(check_account_not_frozen)): # type: ignore
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
 
     if not booking:
@@ -79,7 +80,8 @@ def cancel_booking(
     booking_id: int,
     cancel_data: BookingReject,
     db: Session = Depends(get_db),
-    current_user: Person = Depends(get_current_user)
+    current_user: Person = Depends(get_current_user),
+    _= Depends(check_account_not_frozen)
 ):
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     
@@ -134,7 +136,8 @@ def cancel_booking(
 @router.get("/my-bookings")
 def get_my_bookings(
     db: Session = Depends(get_db),
-    current_user: Person = Depends(get_current_user)
+    current_user: Person = Depends(get_current_user),
+    _= Depends(check_account_not_frozen)
 ):
     if current_user.tipo_utente != PersonType.artista: # type: ignore
         raise HTTPException(
