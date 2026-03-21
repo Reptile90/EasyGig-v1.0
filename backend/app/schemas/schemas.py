@@ -85,3 +85,9 @@ class BandUpdate(BaseModel):
     
 class BookingReject(BaseModel):
     ragione:str
+    
+    
+class ReviewCreate(BaseModel):
+    booking_id:int
+    voto: int
+    testo: Optional[str] = None
